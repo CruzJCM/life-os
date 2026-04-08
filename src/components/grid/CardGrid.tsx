@@ -1,11 +1,9 @@
 import { useEffect, useMemo } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
+import { ResponsiveGridLayout } from 'react-grid-layout';
 import { CardFactory } from '../cards';
-import type { Card, GridLayout, GridLayouts } from '../../types';
+import type { Card, GridLayout as GridLayoutType, GridLayouts } from '../../types';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface CardGridProps {
   cards: Card[];
@@ -31,14 +29,14 @@ export function CardGrid({
 }: CardGridProps) {
   // Convert cards to grid items
   const gridLayouts = useMemo(() => {
-    const lg: GridLayout[] = [];
-    const md: GridLayout[] = [];
-    const sm: GridLayout[] = [];
-    const xs: GridLayout[] = [];
-    const xxs: GridLayout[] = [];
+    const lg: GridLayoutType[] = [];
+    const md: GridLayoutType[] = [];
+    const sm: GridLayoutType[] = [];
+    const xs: GridLayoutType[] = [];
+    const xxs: GridLayoutType[] = [];
 
     cards.forEach((card) => {
-      const item: GridLayout = {
+      const item: GridLayoutType = {
         i: card.id,
         x: card.position_x,
         y: card.position_y,
@@ -58,17 +56,17 @@ export function CardGrid({
     });
 
     return {
-      lg: layouts.lg.length > 0 ? layouts.lg : lg,
-      md: layouts.md.length > 0 ? layouts.md : md,
-      sm: layouts.sm.length > 0 ? layouts.sm : sm,
-      xs: layouts.xs.length > 0 ? layouts.xs : xs,
-      xxs: layouts.xxs.length > 0 ? layouts.xxs : xxs,
+      lg: (layouts.lg ?? []).length > 0 ? layouts.lg : lg,
+      md: (layouts.md ?? []).length > 0 ? layouts.md : md,
+      sm: (layouts.sm ?? []).length > 0 ? layouts.sm : sm,
+      xs: (layouts.xs ?? []).length > 0 ? layouts.xs : xs,
+      xxs: (layouts.xxs ?? []).length > 0 ? layouts.xxs : xxs,
     };
   }, [cards, layouts]);
 
   const handleLayoutChange = (
-    currentLayout: GridLayout[],
-    allLayouts: { [key: string]: GridLayout[] }
+    currentLayout: GridLayoutType[],
+    allLayouts: { [key: string]: GridLayoutType[] }
   ) => {
     onLayoutChange({
       lg: allLayouts.lg || [],
@@ -101,11 +99,6 @@ export function CardGrid({
         cols={cols}
         rowHeight={rowHeight}
         margin={margin}
-        isDraggable={true}
-        isResizable={true}
-        useCSSTransforms={true}
-        compactType="vertical"
-        preventCollision={false}
         onLayoutChange={handleLayoutChange}
       >
         {cards.map((card) => (

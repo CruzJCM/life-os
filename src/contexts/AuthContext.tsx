@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user profile
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -51,80 +50,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Initialize auth state
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
+    // Safety net: never stay stuck loading more than 6 seconds
+    const timeout = setTimeout(() => setLoading(false), 6000);
 
-    // Listen for auth changes
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        }
+      })
+      .catch((err) => {
+        console.error('Error getting session:', err);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+
+    // onAuthStateChange is only for syncing state after login/logout,
+    // NOT responsible for toggling the global loading flag
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setError(null);
-
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
-
-        setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     setError(null);
-    setLoading(true);
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      // onAuthStateChange will update user/session state
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
-      setLoading(false);
       throw err;
     }
   };
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     setError(null);
-    setLoading(true);
-
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: { data: { display_name: displayName } },
       });
 
       if (error) throw error;
 
-      // Create profile
-      if (data.user) {
-        await supabase.from('profiles').insert({
-          id: data.user.id,
-          email,
-          display_name: displayName,
-          theme: 'dark',
-        });
+      if (!data.session) {
+        setError('Revisa tu email para confirmar tu cuenta');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');
-      setLoading(false);
       throw err;
     }
   };
@@ -144,7 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return;
-
     try {
       const { error } = await supabase
         .from('profiles')
@@ -160,19 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        session,
-        loading,
-        error,
-        signIn,
-        signUp,
-        signOut,
-        updateProfile,
-      }}
-    >
+    <AuthContext.Provider value={{ user, profile, session, loading, error, signIn, signUp, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -180,8 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

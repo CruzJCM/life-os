@@ -21,7 +21,15 @@ export function useGrid() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Guarantee all breakpoint keys exist to avoid undefined errors
+        return {
+          lg:  Array.isArray(parsed.lg)  ? parsed.lg  : [],
+          md:  Array.isArray(parsed.md)  ? parsed.md  : [],
+          sm:  Array.isArray(parsed.sm)  ? parsed.sm  : [],
+          xs:  Array.isArray(parsed.xs)  ? parsed.xs  : [],
+          xxs: Array.isArray(parsed.xxs) ? parsed.xxs : [],
+        };
       }
     } catch {
       // Ignore errors

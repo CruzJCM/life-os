@@ -30,6 +30,7 @@ export function useCards() {
       if (error) throw error;
       setCards(data || []);
     } catch (err) {
+      console.error('Error fetching cards:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar tarjetas');
     } finally {
       setLoading(false);
@@ -42,36 +43,46 @@ export function useCards() {
 
     if (!user) return;
 
-    const channel = supabase
-      .channel(`cards:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cards',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setCards((prev) => [...prev, payload.new as Card]);
-          } else if (payload.eventType === 'UPDATE') {
-            setCards((prev) =>
-              prev.map((card) =>
-                card.id === payload.new.id ? (payload.new as Card) : card
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setCards((prev) =>
-              prev.filter((card) => card.id !== payload.old.id)
-            );
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    try {
+      channel = supabase
+        .channel(`cards:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'cards',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setCards((prev) => [...prev, payload.new as Card]);
+            } else if (payload.eventType === 'UPDATE') {
+              setCards((prev) =>
+                prev.map((card) =>
+                  card.id === payload.new.id ? (payload.new as Card) : card
+                )
+              );
+            } else if (payload.eventType === 'DELETE') {
+              setCards((prev) =>
+                prev.filter((card) => card.id !== payload.old.id)
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('Realtime no disponible — usando polling manual.');
+          }
+        });
+    } catch (err) {
+      console.warn('No se pudo inicializar Realtime:', err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [user, fetchCards]);
 
