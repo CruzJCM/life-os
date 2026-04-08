@@ -4,7 +4,7 @@ import { CardGrid, AddCardButton } from '../components/grid';
 import { CreateCardModal } from '../components/modals';
 import { useCards, useGrid } from '../hooks';
 import { Plus } from 'lucide-react';
-import type { CreateCardDTO, Card } from '../types';
+import type { CreateCardDTO, Card, GridLayouts } from '../types';
 
 export function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -30,8 +30,14 @@ export function Dashboard() {
     });
   };
 
-  const handleLayoutChangeWrapper = (layouts: Parameters<typeof handleLayoutChange>[0]) => {
-    handleLayoutChange(layouts.lg, layouts);
+  const handleLayoutChangeWrapper = (newLayouts: GridLayouts) => {
+    handleLayoutChange(newLayouts.lg, {
+      lg: newLayouts.lg,
+      md: newLayouts.md,
+      sm: newLayouts.sm,
+      xs: newLayouts.xs,
+      xxs: newLayouts.xxs,
+    });
   };
 
   return (

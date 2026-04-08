@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { GridLayout, GridLayouts } from '../types';
@@ -17,7 +17,7 @@ const defaultLayouts: GridLayouts = {
 export function useGrid() {
   const { user } = useAuth();
   const [layouts, setLayouts] = useState<GridLayouts>(() => {
-    // Load from localStorage on init
+    // Load from localStorage on init for immediate display
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -37,30 +37,35 @@ export function useGrid() {
     return defaultLayouts;
   });
 
-  // Save to localStorage whenever layouts change
+  // Track if we've loaded from server to avoid overwriting
+  const hasLoadedFromServer = useRef(false);
+  // Debounce timer for server sync
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Save to localStorage immediately for responsive UX
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts));
   }, [layouts]);
 
-  // Sync with Supabase when user is logged in
-  const syncWithServer = useCallback(async () => {
+  // Debounced sync with Supabase - only sync after user stops dragging
+  const syncWithServer = useCallback(async (layoutsToSync: GridLayouts) => {
     if (!user) return;
 
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ grid_layouts: layouts })
+        .update({ grid_layouts: layoutsToSync })
         .eq('id', user.id);
 
       if (error) throw error;
     } catch (err) {
       console.error('Error syncing grid layouts:', err);
     }
-  }, [user, layouts]);
+  }, [user]);
 
-  // Load layouts from server on mount
+  // Load layouts from server on mount (one-time)
   useEffect(() => {
-    if (!user) return;
+    if (!user || hasLoadedFromServer.current) return;
 
     const loadFromServer = async () => {
       try {
@@ -72,6 +77,7 @@ export function useGrid() {
 
         if (error) throw error;
         if (data?.grid_layouts) {
+          hasLoadedFromServer.current = true;
           setLayouts(data.grid_layouts as GridLayouts);
         }
       } catch (err) {
@@ -82,6 +88,31 @@ export function useGrid() {
     loadFromServer();
   }, [user]);
 
+  // Handle layout change with debounced server sync
+  const handleLayoutChange = useCallback(
+    (_layout: GridLayout[], allLayouts: { [key: string]: GridLayout[] }) => {
+      const newLayouts: GridLayouts = {
+        lg: allLayouts.lg || [],
+        md: allLayouts.md || [],
+        sm: allLayouts.sm || [],
+        xs: allLayouts.xs || [],
+        xxs: allLayouts.xxs || [],
+      };
+
+      setLayouts(newLayouts);
+
+      // Debounce server sync - wait 500ms after last change
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+
+      syncTimeoutRef.current = setTimeout(() => {
+        syncWithServer(newLayouts);
+      }, 500);
+    },
+    [syncWithServer]
+  );
+
   // Update layout for a specific breakpoint
   const updateLayout = useCallback(
     (breakpoint: keyof GridLayouts, layout: GridLayout[]) => {
@@ -89,20 +120,6 @@ export function useGrid() {
         ...prev,
         [breakpoint]: layout,
       }));
-    },
-    []
-  );
-
-  // Handle layout change from react-grid-layout
-  const handleLayoutChange = useCallback(
-    (layout: GridLayout[], layouts: { [key: string]: GridLayout[] }) => {
-      setLayouts({
-        lg: layouts.lg || [],
-        md: layouts.md || [],
-        sm: layouts.sm || [],
-        xs: layouts.xs || [],
-        xxs: layouts.xxs || [],
-      });
     },
     []
   );
@@ -118,6 +135,15 @@ export function useGrid() {
   // Reset layouts to default
   const resetLayouts = useCallback(() => {
     setLayouts(defaultLayouts);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
   }, []);
 
   return {
