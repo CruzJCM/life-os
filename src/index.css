@@ -140,26 +140,45 @@ body {
 }
 
 .react-grid-item.cssTransforms {
+  /* Full transition spec for CSS-transform-based positioning (useCSSTransforms=true) */
   transition-property: transform, width, height;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .react-grid-item.react-draggable-dragging {
-  opacity: 0.95;
+  opacity: 0.96;
   z-index: 10;
-  transform: scale(1.02);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  transition: opacity 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  /* No transform here — react-grid-layout uses transform for positioning.
+     Adding scale() would overwrite it and break the drag position. */
+  box-shadow: 0 28px 56px -10px rgba(0, 0, 0, 0.55);
+  /* Disable transition during drag for direct, responsive feel */
+  transition: none !important;
+}
+
+/* Scale effect applied to the inner wrapper so it doesn't conflict with positioning */
+.react-grid-item.react-draggable-dragging .react-grid-item-wrapper {
+  transform: scale(1.03);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .react-grid-item.react-draggable-dragging .card-base {
   cursor: grabbing !important;
 }
 
+/* Snap landing: wrapper returns to scale(1) with a springy bounce */
+.react-grid-item:not(.react-draggable-dragging) .react-grid-item-wrapper {
+  transform: scale(1);
+  transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .react-grid-placeholder {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 2.5rem !important;
-  border: 2px dashed rgba(255, 255, 255, 0.2) !important;
-  transition: all 200ms cubic-bezier(0.25, 1, 0.5, 1);
+  /* Visible accent-colored ghost cell showing the drop target */
+  background: rgba(var(--accent-primary-rgb, 99, 102, 241), 0.10) !important;
+  border-radius: 20px !important;
+  border: 2px dashed rgba(var(--accent-primary-rgb, 99, 102, 241), 0.45) !important;
+  transition: all 150ms cubic-bezier(0.25, 1, 0.5, 1) !important;
+  opacity: 1 !important;
 }
 
 .react-grid-item > .react-resizable-handle {
@@ -195,7 +214,7 @@ body {
   transition: opacity 150ms ease;
 }
 
-/* Smooth snap animation when drag stops */
+/* Snap-to-grid landing animation handled by .cssTransforms + wrapper rules above */
 .react-grid-item:not(.react-draggable-dragging):not(.resizing) {
   transition-duration: 300ms;
 }
