@@ -1,63 +1,78 @@
-import type { Card } from '../../types';
+import { useState } from 'react';
+import type { Card, UpdateCardDTO } from '../../types';
 import { EventCounterCard } from './EventCounterCard';
 import { GoalCounterCard } from './GoalCounterCard';
 import { DailyChecklistCard } from './DailyChecklistCard';
 import { GoalProgressCard } from './GoalProgressCard';
+import { EditCardModal } from '../modals/EditCardModal';
 
 interface CardFactoryProps {
   card: Card;
-  onEdit?: () => void;
   onDelete?: () => void;
   onArchive?: () => void;
   onUpdate?: (card: Card) => void;
 }
 
-export function CardFactory({ card, onEdit, onDelete, onArchive, onUpdate }: CardFactoryProps) {
+export function CardFactory({ card, onDelete, onArchive, onUpdate }: CardFactoryProps) {
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleSave = async (_id: string, updates: UpdateCardDTO) => {
+    if (!onUpdate) return;
+    onUpdate({ ...card, ...updates, config: updates.config ?? card.config });
+  };
+
+  const sharedProps = {
+    onEdit: () => setShowEditModal(true),
+    onDelete,
+    onArchive,
+  };
+
+  let cardComponent = null;
+
   switch (card.type) {
     case 'event_counter':
-      return (
-        <EventCounterCard
-          card={card}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onArchive={onArchive}
-        />
-      );
-
+      cardComponent = <EventCounterCard card={card} {...sharedProps} />;
+      break;
     case 'goal_counter':
-      return (
+      cardComponent = (
         <GoalCounterCard
           card={card}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onArchive={onArchive}
+          {...sharedProps}
           onUpdate={(config) => onUpdate?.({ ...card, config })}
         />
       );
-
+      break;
     case 'daily_checklist':
-      return (
+      cardComponent = (
         <DailyChecklistCard
           card={card}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onArchive={onArchive}
+          {...sharedProps}
           onUpdate={(config) => onUpdate?.({ ...card, config })}
         />
       );
-
+      break;
     case 'goal_progress':
-      return (
+      cardComponent = (
         <GoalProgressCard
           card={card}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onArchive={onArchive}
+          {...sharedProps}
           onUpdate={(config) => onUpdate?.({ ...card, config })}
         />
       );
-
+      break;
     default:
       return null;
   }
+
+  return (
+    <>
+      {cardComponent}
+      <EditCardModal
+        card={card}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSave}
+      />
+    </>
+  );
 }

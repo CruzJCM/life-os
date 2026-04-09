@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useCallback, useRef } from 'react';
-import { ResponsiveGridLayout } from 'react-grid-layout';
-import WidthProvider from 'react-grid-layout/build/WidthProvider';
+import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
+// @ts-ignore
+import { Responsive as ResponsiveGridLayout } from 'react-grid-layout';
 import { CardFactory } from '../cards';
 import type { Card, GridLayout as GridLayoutType, GridLayouts } from '../../types';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-
-const ResponsiveGrid = WidthProvider(ResponsiveGridLayout);
 
 interface CardGridProps {
   cards: Card[];
@@ -18,9 +16,14 @@ interface CardGridProps {
 }
 
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
-const cols = { lg: 4, md: 4, sm: 2, xs: 1, xxs: 1 };
+// Doubled columns so cards can be half the previous minimum width
+const cols = { lg: 8, md: 8, sm: 4, xs: 2, xxs: 1 };
 const rowHeight = 140;
 const margin = [24, 24] as [number, number];
+const resizeConfig = {
+  enabled: true,
+  handles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] as const,
+};
 
 export function CardGrid({
   cards,
@@ -31,8 +34,19 @@ export function CardGrid({
   onCardArchive,
 }: CardGridProps) {
   const isDraggingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(1200);
 
-  // Convert cards to grid items - prefer saved layouts over card positions
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setWidth(entries[0].contentRect.width);
+    });
+    observer.observe(containerRef.current);
+    setWidth(containerRef.current.getBoundingClientRect().width);
+    return () => observer.disconnect();
+  }, []);
+
   const gridLayouts = useMemo(() => {
     const lg: GridLayoutType[] = [];
     const md: GridLayoutType[] = [];
@@ -41,22 +55,23 @@ export function CardGrid({
     const xxs: GridLayoutType[] = [];
 
     cards.forEach((card) => {
+      // Multiply saved width by 2 to map old 4-col coords to new 8-col grid
       const item: GridLayoutType = {
         i: card.id,
-        x: card.position_x,
+        x: card.position_x * 2,
         y: card.position_y,
-        w: card.width,
+        w: card.width * 2,
         h: card.height,
         minW: 1,
         minH: 1,
-        maxW: 4,
+        maxW: 8,
         maxH: 4,
       };
 
       lg.push(item);
       md.push(item);
-      sm.push({ ...item, w: Math.min(item.w, 2) });
-      xs.push({ ...item, w: 1 });
+      sm.push({ ...item, w: Math.min(item.w, 4) });
+      xs.push({ ...item, w: Math.min(item.w, 2) });
       xxs.push({ ...item, w: 1 });
     });
 
@@ -70,8 +85,7 @@ export function CardGrid({
   }, [cards, layouts]);
 
   const handleLayoutChange = useCallback(
-    (_currentLayout: GridLayoutType[], allLayouts: { [key: string]: GridLayoutType[] }) => {
-      // Only emit change if not currently dragging (prevents excessive updates)
+    (_layout: unknown, allLayouts: Record<string, GridLayoutType[]>) => {
       if (!isDraggingRef.current) {
         onLayoutChange({
           lg: allLayouts.lg || [],
@@ -92,7 +106,6 @@ export function CardGrid({
   const handleDragStop = useCallback(
     (layout: GridLayoutType[]) => {
       isDraggingRef.current = false;
-      // Emit the final layout change after drag stops
       onLayoutChange({
         lg: layout,
         md: layouts.md,
@@ -106,7 +119,6 @@ export function CardGrid({
 
   const handleResizeStop = useCallback(
     (layout: GridLayoutType[]) => {
-      // Emit layout change after resize stops
       onLayoutChange({
         lg: layout,
         md: layouts.md,
@@ -118,7 +130,6 @@ export function CardGrid({
     [onLayoutChange, layouts]
   );
 
-  // Prevent scroll when dragging
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
@@ -126,29 +137,25 @@ export function CardGrid({
         e.stopPropagation();
       }
     };
-
     document.addEventListener('wheel', handleWheel, { passive: true });
     return () => document.removeEventListener('wheel', handleWheel);
   }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6">
-      <ResponsiveGrid
+    <div ref={containerRef} className="w-full max-w-5xl mx-auto px-6">
+      <ResponsiveGridLayout
         className="layout"
         layouts={gridLayouts}
         breakpoints={breakpoints}
         cols={cols}
         rowHeight={rowHeight}
         margin={margin}
-        onLayoutChange={handleLayoutChange}
-        onDragStart={handleDragStart}
-        onDragStop={handleDragStop}
-        onResizeStop={handleResizeStop}
-        compactType={null}
-        preventCollision={true}
-        useCSSTransforms={true}
-        isResizable={true}
-        isDraggable={true}
+        width={width}
+        resizeConfig={resizeConfig}
+        onLayoutChange={handleLayoutChange as any}
+        onDragStart={handleDragStart as any}
+        onDragStop={handleDragStop as any}
+        onResizeStop={handleResizeStop as any}
       >
         {cards.map((card) => (
           <div key={card.id} className="react-grid-item-wrapper">
@@ -160,7 +167,7 @@ export function CardGrid({
             />
           </div>
         ))}
-      </ResponsiveGrid>
+      </ResponsiveGridLayout>
     </div>
   );
 }
