@@ -132,6 +132,20 @@ body {
   transition: height 200ms ease;
 }
 
+/* ── Text selection fix ──────────────────────────────────────────
+   react-draggable sets user-select:none as an inline style on the
+   grid container. !important on a descendant selector overrides it.
+   Only suppress selection while actively dragging. */
+.react-grid-item * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+.react-grid-item.react-draggable-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+
 .react-grid-item {
   transition: left 300ms cubic-bezier(0.25, 1, 0.5, 1),
               top 300ms cubic-bezier(0.25, 1, 0.5, 1),
