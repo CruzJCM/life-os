@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Modal, Input, Button, ColorPicker } from '../ui';
 import { Calendar, Target, CheckCircle2, TrendingUp } from 'lucide-react';
 import type { CardType, CreateCardDTO } from '../../types';
-import { CARD_COLORS, generateId } from '../../lib/utils';
+import { CARD_COLORS } from '../../lib/utils';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CreateCardModalProps {
   isOpen: boolean;
@@ -52,10 +53,13 @@ const defaultConfigs: Record<CardType, Record<string, unknown>> = {
 };
 
 export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalProps) {
+  const { currentAccentColor } = useTheme();
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<CardType | null>(null);
   const [title, setTitle] = useState('');
-  const [color, setColor] = useState(CARD_COLORS[0].value);
+  const [color, setColor] = useState(currentAccentColor || CARD_COLORS[0].value);
+  const [cardOpacity, setCardOpacity] = useState(0.9);
+  const [cardBlur, setCardBlur] = useState(28);
   const [isLoading, setIsLoading] = useState(false);
 
   // Event counter specific
@@ -74,7 +78,9 @@ export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalPr
     setStep(1);
     setSelectedType(null);
     setTitle('');
-    setColor(CARD_COLORS[0].value);
+    setColor(currentAccentColor || CARD_COLORS[0].value);
+    setCardOpacity(0.9);
+    setCardBlur(28);
     setTargetDate('');
     setEventName('');
     setPeriod('week');
@@ -114,6 +120,14 @@ export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalPr
           config = { current: 0, target: goalTarget || 100, unit: unit || '' };
           break;
       }
+
+      config = {
+        ...config,
+        visual: {
+          opacity: cardOpacity,
+          blur: cardBlur,
+        },
+      };
 
       await onCreate({
         type: selectedType,
@@ -272,6 +286,46 @@ export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalPr
                 Color
               </label>
               <ColorPicker value={color} onChange={setColor} />
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">
+                    Opacidad de tarjeta
+                  </label>
+                  <span className="text-xs text-[var(--text-tertiary)]">
+                    {Math.round(cardOpacity * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.55}
+                  max={1}
+                  step={0.01}
+                  value={cardOpacity}
+                  onChange={(e) => setCardOpacity(parseFloat(e.target.value))}
+                  className="w-full accent-[var(--accent-primary)]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">
+                    Blur de tarjeta
+                  </label>
+                  <span className="text-xs text-[var(--text-tertiary)]">{cardBlur}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={40}
+                  step={1}
+                  value={cardBlur}
+                  onChange={(e) => setCardBlur(parseInt(e.target.value, 10))}
+                  className="w-full accent-[var(--accent-primary)]"
+                />
+              </div>
             </div>
           </>
         )}

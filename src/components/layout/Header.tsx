@@ -14,7 +14,7 @@ export function Header({ title = 'Dashboard' }: HeaderProps) {
   };
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
+    <header className="workspace-header relative z-10 flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-sm">
       <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
 
       <div className="flex items-center gap-3">

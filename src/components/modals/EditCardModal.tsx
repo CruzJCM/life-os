@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import { Modal, Input, Button, ColorPicker } from '../ui';
 import type { Card, CardType, UpdateCardDTO } from '../../types';
-import { CARD_COLORS } from '../../lib/utils';
 
 interface EditCardModalProps {
   card: Card;
   isOpen: boolean;
   onClose: () => void;
   onSave: (id: string, updates: UpdateCardDTO) => Promise<void>;
+  onApplyVisualToAll?: (sourceCardId: string, visual: { opacity: number; blur: number }) => Promise<void>;
 }
 
-export function EditCardModal({ card, isOpen, onClose, onSave }: EditCardModalProps) {
+export function EditCardModal({
+  card,
+  isOpen,
+  onClose,
+  onSave,
+  onApplyVisualToAll,
+}: EditCardModalProps) {
   const [title, setTitle] = useState(card.title);
   const [color, setColor] = useState(card.color);
+  const [cardOpacity, setCardOpacity] = useState((card.config as any).visual?.opacity ?? 0.9);
+  const [cardBlur, setCardBlur] = useState((card.config as any).visual?.blur ?? 28);
   const [isLoading, setIsLoading] = useState(false);
 
   // Event counter
@@ -58,6 +66,14 @@ export function EditCardModal({ card, isOpen, onClose, onSave }: EditCardModalPr
         // daily_checklist: items are edited inline, nothing extra here
       }
 
+      config = {
+        ...config,
+        visual: {
+          opacity: cardOpacity,
+          blur: cardBlur,
+        },
+      };
+
       await onSave(card.id, { title, color, config });
       onClose();
     } finally {
@@ -70,6 +86,19 @@ export function EditCardModal({ card, isOpen, onClose, onSave }: EditCardModalPr
     if (card.type === 'event_counter' && !targetDate) return false;
     if (card.type === 'goal_progress' && !goalTarget) return false;
     return true;
+  };
+
+  const handleApplyVisualToAll = async () => {
+    if (!onApplyVisualToAll) return;
+    setIsLoading(true);
+    try {
+      await onApplyVisualToAll(card.id, {
+        opacity: cardOpacity,
+        blur: cardBlur,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -163,7 +192,55 @@ export function EditCardModal({ card, isOpen, onClose, onSave }: EditCardModalPr
           <ColorPicker value={color} onChange={setColor} />
         </div>
 
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">
+                Opacidad de tarjeta
+              </label>
+              <span className="text-xs text-[var(--text-tertiary)]">
+                {Math.round(cardOpacity * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0.55}
+              max={1}
+              step={0.01}
+              value={cardOpacity}
+              onChange={(e) => setCardOpacity(parseFloat(e.target.value))}
+              className="w-full accent-[var(--accent-primary)]"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">
+                Blur de tarjeta
+              </label>
+              <span className="text-xs text-[var(--text-tertiary)]">{cardBlur}px</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={40}
+              step={1}
+              value={cardBlur}
+              onChange={(e) => setCardBlur(parseInt(e.target.value, 10))}
+              className="w-full accent-[var(--accent-primary)]"
+            />
+          </div>
+        </div>
+
         <div className="flex gap-3 pt-2">
+          <Button
+            variant="secondary"
+            onClick={handleApplyVisualToAll}
+            disabled={!onApplyVisualToAll}
+            isLoading={isLoading}
+          >
+            Aplicar visual a todas
+          </Button>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

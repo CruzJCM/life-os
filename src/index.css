@@ -13,9 +13,11 @@
   --text-secondary: #86868b;
   --text-tertiary: #aeaeb2;
   --border-color: rgba(0, 0, 0, 0.1);
-  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-bg: rgba(255, 255, 255, 0.9);
   --card-border: rgba(0, 0, 0, 0.05);
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --card-surface-rgb: 255, 255, 255;
+  --card-base-opacity: 0.9;
 
   /* Accent colors */
   --accent-primary: #007aff;
@@ -30,6 +32,19 @@
   /* Sidebar */
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 72px;
+  --sidebar-bg: #f5f5f7;
+  --sidebar-hover-bg: #ececf1;
+  --sidebar-active-bg: #e4e4ea;
+  --sidebar-border-color: rgba(0, 0, 0, 0.1);
+
+  --grid-bg-image: none;
+  --grid-bg-size: 140% 140%;
+  --grid-bg-position: center;
+  --grid-bg-repeat: no-repeat;
+  --grid-bg-attachment: scroll;
+  --grid-bg-blur: 12px;
+  --grid-bg-opacity: 1;
+  --grid-bg-transform: scale(1.08);
 }
 
 .dark {
@@ -41,9 +56,11 @@
   --text-secondary: #8e8e93;
   --text-tertiary: #636366;
   --border-color: rgba(255, 255, 255, 0.1);
-  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-bg: rgba(28, 28, 30, 0.34);
   --card-border: rgba(255, 255, 255, 0.1);
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --card-surface-rgb: 28, 28, 30;
+  --card-base-opacity: 0.34;
 
   /* Accent colors - Dark mode variants */
   --accent-primary: #0a84ff;
@@ -54,6 +71,11 @@
   --accent-pink: #ff375f;
   --accent-teal: #64d2ff;
   --accent-indigo: #5e5ce6;
+
+  --sidebar-bg: #1c1c1e;
+  --sidebar-hover-bg: #2b2b2d;
+  --sidebar-active-bg: #363638;
+  --sidebar-border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ===========================================
@@ -88,9 +110,9 @@ body {
    =========================================== */
 
 .card-base {
-  background: var(--card-bg);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  background: rgba(var(--card-surface-rgb), var(--card-surface-opacity, var(--card-base-opacity)));
+  backdrop-filter: blur(var(--card-surface-blur, 28px));
+  -webkit-backdrop-filter: blur(var(--card-surface-blur, 28px));
   border: 1px solid var(--card-border);
   border-radius: 2.5rem;
   box-shadow: var(--card-shadow);
@@ -130,6 +152,37 @@ body {
 .react-grid-layout {
   position: relative;
   transition: height 200ms ease;
+}
+
+.workspace-main {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.workspace-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--grid-bg-image);
+  background-size: var(--grid-bg-size);
+  background-position: var(--grid-bg-position);
+  background-repeat: var(--grid-bg-repeat);
+  background-attachment: var(--grid-bg-attachment);
+  filter: blur(var(--grid-bg-blur));
+  transform: var(--grid-bg-transform);
+  opacity: var(--grid-bg-opacity);
+  z-index: -2;
+  pointer-events: none;
+}
+
+.workspace-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.12));
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ── Text selection fix ──────────────────────────────────────────
@@ -199,13 +252,13 @@ body {
 .react-grid-item > .react-resizable-handle {
   position: absolute;
   opacity: 0;
-  transition: opacity 200ms ease;
   background: none;
   z-index: 5;
 }
 
-.react-grid-item:hover > .react-resizable-handle {
-  opacity: 1;
+.react-grid-item > .react-resizable-handle::after {
+  display: none;
+  content: none;
 }
 
 /* Corner handles */
@@ -266,6 +319,37 @@ body {
 /* Snap-to-grid landing animation handled by .cssTransforms + wrapper rules above */
 .react-grid-item:not(.react-draggable-dragging):not(.resizing) {
   transition-duration: 300ms;
+}
+
+.card-source-hidden {
+  visibility: hidden;
+}
+
+.card-focus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(5, 8, 14, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.card-focus-panel {
+  position: fixed;
+  overflow: auto;
+  will-change: left, top, width, height;
+  --card-surface-opacity: 0.97;
+  --card-border: rgba(0, 0, 0, 0.14);
+}
+
+.card-focus-panel .card-base {
+  height: 100%;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+.dark .card-focus-panel {
+  --card-surface-opacity: 0.92;
+  --card-border: rgba(255, 255, 255, 0.24);
 }
 
 /* ===========================================

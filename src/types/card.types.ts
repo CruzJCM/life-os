@@ -10,12 +10,21 @@ export type CardStatus = 'active' | 'completed' | 'archived';
 // Card Configurations (stored in JSONB)
 // ===========================================
 
-export interface EventCounterConfig {
+export interface CardVisualSettings {
+  opacity: number;
+  blur: number;
+}
+
+interface BaseCardConfig {
+  visual?: CardVisualSettings;
+}
+
+export interface EventCounterConfig extends BaseCardConfig {
   target_date: string;
   event_name: string;
 }
 
-export interface GoalCounterConfig {
+export interface GoalCounterConfig extends BaseCardConfig {
   period: 'week' | 'month';
   current_count: number;
   target_count?: number;
@@ -28,11 +37,11 @@ export interface ChecklistItem {
   completed: boolean;
 }
 
-export interface DailyChecklistConfig {
+export interface DailyChecklistConfig extends BaseCardConfig {
   items: ChecklistItem[];
 }
 
-export interface GoalProgressConfig {
+export interface GoalProgressConfig extends BaseCardConfig {
   current: number;
   target: number;
   unit: string;

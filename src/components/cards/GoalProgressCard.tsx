@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TrendingUp, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCard } from './BaseCard';
@@ -21,13 +21,22 @@ export function GoalProgressCard({
   onUpdate,
 }: GoalProgressCardProps) {
   const config = card.config as GoalProgressConfig;
+  const visual = config.visual ?? { opacity: 0.9, blur: 28 };
   const [inputValue, setInputValue] = useState(config.current.toString());
   const progress = calculateProgress(config.current, config.target);
   const isComplete = config.current >= config.target;
 
+  useEffect(() => {
+    setInputValue(config.current.toString());
+  }, [config.current]);
+
   const commitValue = (raw: string) => {
     const value = parseFloat(raw);
     if (!isNaN(value) && value >= 0 && onUpdate) {
+      if (value === config.current) {
+        setInputValue(config.current.toString());
+        return;
+      }
       onUpdate({ ...config, current: value });
     } else {
       setInputValue(config.current.toString());
@@ -52,6 +61,8 @@ export function GoalProgressCard({
       title={card.title}
       icon={isComplete ? Award : TrendingUp}
       color={card.color}
+      opacity={visual.opacity}
+      blur={visual.blur}
       onEdit={onEdit}
       onDelete={onDelete}
       onArchive={onArchive}

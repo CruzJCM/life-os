@@ -7,6 +7,8 @@ interface BaseCardProps {
   title: string;
   icon?: LucideIcon;
   color?: string;
+  opacity?: number;
+  blur?: number;
   children: ReactNode;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -18,6 +20,8 @@ export function BaseCard({
   title,
   icon: Icon,
   color = '#3B82F6',
+  opacity = 0.9,
+  blur = 28,
   children,
   onEdit,
   onDelete,
@@ -36,11 +40,13 @@ export function BaseCard({
         {
           '--card-accent': color,
           '--card-accent-bg': `${color}15`,
+          '--card-surface-opacity': String(Math.min(1, Math.max(0.5, opacity))),
+          '--card-surface-blur': `${Math.min(40, Math.max(0, blur))}px`,
         } as React.CSSProperties
       }
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-color)]">
+      <div className="card-interactive-zone flex items-center justify-between px-5 py-4 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-3">
           {Icon && (
             <div
@@ -115,7 +121,7 @@ export function BaseCard({
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-5 overflow-auto">{children}</div>
+      <div className="card-interactive-zone flex-1 p-5 overflow-auto">{children}</div>
     </div>
   );
 }

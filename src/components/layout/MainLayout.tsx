@@ -18,7 +18,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       <main
         className={cn(
-          'min-h-screen transition-all duration-300',
+          'workspace-main min-h-screen transition-all duration-300',
           isSidebarCollapsed ? 'ml-[72px]' : 'ml-[280px]'
         )}
       >

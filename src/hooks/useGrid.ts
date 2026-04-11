@@ -4,9 +4,31 @@ import { supabase } from '../lib/supabase';
 import type { GridLayout, GridLayouts } from '../types';
 
 const STORAGE_KEY = 'life-os-grid-layouts';
+const GRID_SYNC_RETRY_MS = 1500;
+const GRID_SYNC_MAX_RETRIES = 3;
 
 const defaultLayouts: GridLayouts = {
   lg: [], md: [], sm: [], xs: [], xxs: [],
+};
+
+const serializeLayouts = (value: GridLayouts) => JSON.stringify(value);
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const runWithRetry = async <T,>(operation: () => Promise<T>, maxRetries = GRID_SYNC_MAX_RETRIES): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries - 1) {
+        await sleep(400 * 2 ** attempt);
+      }
+    }
+  }
+
+  throw lastError;
 };
 
 export function useGrid() {
@@ -29,6 +51,7 @@ export function useGrid() {
   });
 
   const hasLoadedFromServer = useRef(false);
+  const lastSyncedLayoutsRef = useRef<string>('');
 
   // Persist to localStorage on every change (instant, no risk of loss on tab close)
   useEffect(() => {
@@ -39,14 +62,27 @@ export function useGrid() {
   // ensures this fires only once per drag/resize stop, not on every pixel
   const syncWithServer = useCallback(async (layoutsToSync: GridLayouts) => {
     if (!user) return;
+
+    const serialized = serializeLayouts(layoutsToSync);
+    if (serialized === lastSyncedLayoutsRef.current) return;
+
+    const previousSerialized = lastSyncedLayoutsRef.current;
+    lastSyncedLayoutsRef.current = serialized;
+
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ grid_layouts: layoutsToSync })
-        .eq('id', user.id);
+      const { error } = await runWithRetry(async () => {
+        return await supabase
+          .from('profiles')
+          .update({ grid_layouts: layoutsToSync })
+          .eq('id', user.id);
+      });
       if (error) throw error;
     } catch (err) {
+      lastSyncedLayoutsRef.current = previousSerialized;
       console.error('Error syncing grid layouts:', err);
+      setTimeout(() => {
+        void syncWithServer(layoutsToSync);
+      }, GRID_SYNC_RETRY_MS);
     }
   }, [user]);
 
@@ -66,13 +102,15 @@ export function useGrid() {
 
         if (data?.grid_layouts) {
           const remote = data.grid_layouts as GridLayouts;
-          setLayouts({
+          const normalizedLayouts = {
             lg:  Array.isArray(remote.lg)  ? remote.lg  : [],
             md:  Array.isArray(remote.md)  ? remote.md  : [],
             sm:  Array.isArray(remote.sm)  ? remote.sm  : [],
             xs:  Array.isArray(remote.xs)  ? remote.xs  : [],
             xxs: Array.isArray(remote.xxs) ? remote.xxs : [],
-          });
+          };
+          setLayouts(normalizedLayouts);
+          lastSyncedLayoutsRef.current = serializeLayouts(normalizedLayouts);
         }
       } catch (err) {
         console.error('Error loading grid layouts:', err);
@@ -94,7 +132,13 @@ export function useGrid() {
         xs:  allLayouts.xs  || [],
         xxs: allLayouts.xxs || [],
       };
-      setLayouts(newLayouts);
+
+      setLayouts((prev) => {
+        if (serializeLayouts(prev) === serializeLayouts(newLayouts)) {
+          return prev;
+        }
+        return newLayouts;
+      });
       syncWithServer(newLayouts); // immediate — no debounce
     },
     [syncWithServer]

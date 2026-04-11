@@ -40,6 +40,24 @@ export function Dashboard() {
     });
   };
 
+  const handleApplyVisualToAll = async (
+    sourceCardId: string,
+    visual: { opacity: number; blur: number }
+  ) => {
+    const updates = cards
+      .filter((card) => card.id !== sourceCardId)
+      .map((card) =>
+        updateCard(card.id, {
+          config: {
+            ...(card.config as Record<string, unknown>),
+            visual,
+          } as Card['config'],
+        })
+      );
+
+    await Promise.all(updates);
+  };
+
   return (
     <MainLayout>
       <Header title="Dashboard" />
@@ -80,6 +98,7 @@ export function Dashboard() {
             onCardUpdate={handleCardUpdate}
             onCardDelete={deleteCard}
             onCardArchive={archiveCard}
+            onApplyVisualToAll={handleApplyVisualToAll}
           />
         )}
       </div>

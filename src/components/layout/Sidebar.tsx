@@ -6,6 +6,7 @@ import {
   Calendar,
   History,
   Settings,
+  Palette,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/calendar', icon: Calendar, label: 'Calendario' },
   { to: '/history', icon: History, label: 'Historial' },
   { to: '/settings', icon: Settings, label: 'Ajustes' },
+  { to: '/colors', icon: Palette, label: 'Colores' },
 ];
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
@@ -36,12 +38,12 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       animate={{ width: isCollapsed ? 72 : 280 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className={cn(
-        'fixed left-0 top-0 h-full bg-[var(--bg-secondary)] border-r border-[var(--border-color)]',
+        'fixed left-0 top-0 h-full bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border-color)]',
         'flex flex-col z-40'
       )}
     >
       {/* Logo/Header */}
-      <div className="flex items-center justify-between px-4 h-16 border-b border-[var(--border-color)]">
+      <div className="flex items-center justify-between px-4 h-16 border-b border-[var(--sidebar-border-color)]">
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.span
@@ -59,7 +61,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <motion.button
           onClick={onToggle}
           className={cn(
-            'p-2 rounded-xl hover:bg-[var(--bg-tertiary)]',
+            'p-2 rounded-xl hover:bg-[var(--sidebar-hover-bg)]',
             isCollapsed && 'mx-auto'
           )}
           whileHover={{ scale: 1.05 }}
@@ -106,8 +108,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors',
-                    'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]',
-                    isActive && 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-medium',
+                    'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--sidebar-hover-bg)]',
+                    isActive && 'bg-[var(--sidebar-active-bg)] text-[var(--text-primary)] font-medium',
                     isCollapsed && 'justify-center'
                   )
                 }
@@ -139,13 +141,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* User Section */}
-      <div className="border-t border-[var(--border-color)] p-3">
+      <div className="border-t border-[var(--sidebar-border-color)] p-3">
         <div className="relative">
           <motion.button
             onClick={() => setShowUserMenu(!showUserMenu)}
             className={cn(
               'flex items-center gap-3 w-full px-3 py-2 rounded-xl',
-              'hover:bg-[var(--bg-tertiary)]',
+              'hover:bg-[var(--sidebar-hover-bg)]',
               isCollapsed && 'justify-center'
             )}
             whileHover={{ scale: 1.02 }}
@@ -183,14 +185,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute bottom-full left-0 w-full mb-2 bg-[var(--bg-tertiary)] rounded-xl shadow-lg border border-[var(--border-color)] overflow-hidden"
+                className="absolute bottom-full left-0 w-full mb-2 bg-[var(--sidebar-active-bg)] rounded-xl shadow-lg border border-[var(--sidebar-border-color)] overflow-hidden"
               >
                 <motion.button
                   onClick={() => {
                     signOut();
                     setShowUserMenu(false);
                   }}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover-bg)] transition-colors"
                   whileHover={{ x: 4 }}
                 >
                   <LogOut className="w-4 h-4" />

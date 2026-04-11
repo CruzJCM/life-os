@@ -11,9 +11,16 @@ interface CardFactoryProps {
   onDelete?: () => void;
   onArchive?: () => void;
   onUpdate?: (card: Card) => void;
+  onApplyVisualToAll?: (sourceCardId: string, visual: { opacity: number; blur: number }) => Promise<void>;
 }
 
-export function CardFactory({ card, onDelete, onArchive, onUpdate }: CardFactoryProps) {
+export function CardFactory({
+  card,
+  onDelete,
+  onArchive,
+  onUpdate,
+  onApplyVisualToAll,
+}: CardFactoryProps) {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const handleSave = async (_id: string, updates: UpdateCardDTO) => {
@@ -72,6 +79,7 @@ export function CardFactory({ card, onDelete, onArchive, onUpdate }: CardFactory
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSave={handleSave}
+        onApplyVisualToAll={onApplyVisualToAll}
       />
     </>
   );

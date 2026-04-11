@@ -13,6 +13,7 @@ interface EventCounterCardProps {
 
 export function EventCounterCard({ card, onEdit, onDelete, onArchive }: EventCounterCardProps) {
   const config = card.config as EventCounterConfig;
+  const visual = config.visual ?? { opacity: 0.9, blur: 28 };
   const [days, setDays] = useState(0);
 
   useEffect(() => {
@@ -35,6 +36,8 @@ export function EventCounterCard({ card, onEdit, onDelete, onArchive }: EventCou
       title={card.title}
       icon={Calendar}
       color={card.color}
+      opacity={visual.opacity}
+      blur={visual.blur}
       onEdit={onEdit}
       onDelete={onDelete}
       onArchive={onArchive}

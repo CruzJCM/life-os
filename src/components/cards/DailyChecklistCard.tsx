@@ -21,6 +21,7 @@ export function DailyChecklistCard({
   onUpdate,
 }: DailyChecklistCardProps) {
   const config = card.config as DailyChecklistConfig;
+  const visual = config.visual ?? { opacity: 0.9, blur: 28 };
   const [isAdding, setIsAdding] = useState(false);
   const [newItemText, setNewItemText] = useState('');
 
@@ -66,6 +67,8 @@ export function DailyChecklistCard({
       title={card.title}
       icon={CheckCircle2}
       color={card.color}
+      opacity={visual.opacity}
+      blur={visual.blur}
       onEdit={onEdit}
       onDelete={onDelete}
       onArchive={onArchive}

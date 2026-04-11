@@ -21,6 +21,7 @@ export function GoalCounterCard({
   onUpdate,
 }: GoalCounterCardProps) {
   const config = card.config as GoalCounterConfig;
+  const visual = config.visual ?? { opacity: 0.9, blur: 28 };
   const [isAnimating, setIsAnimating] = useState(false);
   const progress = config.target_count
     ? calculateProgress(config.current_count, config.target_count)
@@ -51,6 +52,8 @@ export function GoalCounterCard({
       title={card.title}
       icon={Target}
       color={card.color}
+      opacity={visual.opacity}
+      blur={visual.blur}
       onEdit={onEdit}
       onDelete={onDelete}
       onArchive={onArchive}

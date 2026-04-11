@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Dashboard, Auth, Calendar, History, Settings } from '../pages';
+import { Dashboard, Auth, Calendar, History, Settings, Colors } from '../pages';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -79,6 +79,14 @@ export function Router() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/colors"
+          element={
+            <ProtectedRoute>
+              <Colors />
             </ProtectedRoute>
           }
         />
