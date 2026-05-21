@@ -52,9 +52,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
-              className="text-xl font-bold text-[var(--text-primary)]"
+              className="flex items-center gap-2 text-xl font-bold text-[var(--text-primary)]"
             >
-              Life OS
+              <img
+                src="/Diamond-Emoji.png"
+                alt="Daimon"
+                className="h-6 w-6"
+              />
+              Daimon
             </motion.span>
           )}
         </AnimatePresence>

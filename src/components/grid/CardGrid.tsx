@@ -4,6 +4,7 @@ import { Responsive as ResponsiveGridLayout } from 'react-grid-layout';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CardFactory } from '../cards';
 import type { Card, GridLayout as GridLayoutType, GridLayouts } from '../../types';
+import type { CardCategory } from '../../hooks/useCardCategories';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -15,6 +16,8 @@ interface CardGridProps {
   onCardDelete: (id: string) => void;
   onCardArchive: (id: string) => void;
   onApplyVisualToAll: (sourceCardId: string, visual: { opacity: number; blur: number }) => Promise<void>;
+  categories: CardCategory[];
+  onCreateCategory: (name: string) => string | null;
 }
 
 const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -47,8 +50,11 @@ export function CardGrid({
   onCardDelete,
   onCardArchive,
   onApplyVisualToAll,
+  categories,
+  onCreateCategory,
 }: CardGridProps) {
   const isDraggingRef = useRef(false);
+  const isResizingRef = useRef(false);
   const suppressClickFocusRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(1200);
@@ -164,12 +170,24 @@ export function CardGrid({
     [onLayoutChange, layouts]
   );
 
+  const handleResizeStart = useCallback(() => {
+    isResizingRef.current = true;
+    suppressClickFocusRef.current = true;
+  }, []);
+
   const handleCardWrapperClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>, cardId: string) => {
       if (suppressClickFocusRef.current) return;
 
       const target = e.target as HTMLElement;
-      if (target.closest('button, [role="button"]')) return;
+      if (target.closest('.react-resizable-handle')) return;
+      if (
+        target.closest(
+          'button, [role="button"], input, textarea, select, option, a, label, [contenteditable="true"], .card-interactive-zone'
+        )
+      ) {
+        return;
+      }
 
       const rect = e.currentTarget.getBoundingClientRect();
       setFocusOriginRect({
@@ -201,6 +219,10 @@ export function CardGrid({
 
   const handleResizeStop = useCallback(
     (layout: GridLayoutType[]) => {
+      isResizingRef.current = false;
+      setTimeout(() => {
+        suppressClickFocusRef.current = false;
+      }, 0);
       onLayoutChange({
         lg: layout,
         md: layouts.md,
@@ -240,6 +262,7 @@ export function CardGrid({
         onLayoutChange={handleLayoutChange as any}
         onDragStart={handleDragStart as any}
         onDragStop={handleDragStop as any}
+        onResizeStart={handleResizeStart as any}
         onResizeStop={handleResizeStop as any}
       >
         {cards.map((card) => (
@@ -254,6 +277,8 @@ export function CardGrid({
               onDelete={() => onCardDelete(card.id)}
               onArchive={() => onCardArchive(card.id)}
               onApplyVisualToAll={onApplyVisualToAll}
+              categories={categories}
+              onCreateCategory={onCreateCategory}
             />
           </div>
         ))}
@@ -300,6 +325,8 @@ export function CardGrid({
                   closeFocusedCard();
                 }}
                 onApplyVisualToAll={onApplyVisualToAll}
+                categories={categories}
+                onCreateCategory={onCreateCategory}
               />
             </motion.div>
           </motion.div>

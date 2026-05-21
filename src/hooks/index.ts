@@ -5,3 +5,4 @@ export { useAutoArchive } from './useAutoArchive';
 export { useHistory } from './useHistory';
 export { useCalendar } from './useCalendar';
 export { usePeriodReset } from './usePeriodReset';
+export { useCardCategories } from './useCardCategories';

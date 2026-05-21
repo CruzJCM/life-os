@@ -1,4 +1,4 @@
-# Life OS v3
+# Daimon
 
 Una aplicación de gestión personal tipo dashboard con tarjetas arrastrables y redimensionables para organizar tu vida.
 
@@ -29,7 +29,7 @@ Una aplicación de gestión personal tipo dashboard con tarjetas arrastrables y 
 
 ```bash
 git clone <repository-url>
-cd life-os-v3
+cd daimon
 ```
 
 ### 2. Instalar dependencias

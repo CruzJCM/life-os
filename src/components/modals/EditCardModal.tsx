@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Input, Button, ColorPicker } from '../ui';
 import type { Card, CardType, UpdateCardDTO } from '../../types';
+import type { CardCategory } from '../../hooks/useCardCategories';
 
 interface EditCardModalProps {
   card: Card;
@@ -8,6 +9,8 @@ interface EditCardModalProps {
   onClose: () => void;
   onSave: (id: string, updates: UpdateCardDTO) => Promise<void>;
   onApplyVisualToAll?: (sourceCardId: string, visual: { opacity: number; blur: number }) => Promise<void>;
+  categories: CardCategory[];
+  onCreateCategory: (name: string) => string | null;
 }
 
 export function EditCardModal({
@@ -16,9 +19,13 @@ export function EditCardModal({
   onClose,
   onSave,
   onApplyVisualToAll,
+  categories,
+  onCreateCategory,
 }: EditCardModalProps) {
   const [title, setTitle] = useState(card.title);
   const [color, setColor] = useState(card.color);
+  const [categoryId, setCategoryId] = useState((card.config as any).categoryId ?? '');
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [cardOpacity, setCardOpacity] = useState((card.config as any).visual?.opacity ?? 0.9);
   const [cardBlur, setCardBlur] = useState((card.config as any).visual?.blur ?? 28);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,6 +75,7 @@ export function EditCardModal({
 
       config = {
         ...config,
+        categoryId: categoryId || null,
         visual: {
           opacity: cardOpacity,
           blur: cardBlur,
@@ -184,6 +192,50 @@ export function EditCardModal({
             />
           </div>
         )}
+
+        <div>
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+            Categoría
+          </label>
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full px-4 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)]"
+          >
+            <option value="">Sin categoría</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-[var(--text-secondary)]">
+            Crear categoría nueva
+          </label>
+          <div className="flex gap-2">
+            <Input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Ej: Salud"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                const createdId = onCreateCategory(newCategoryName);
+                if (createdId) {
+                  setCategoryId(createdId);
+                  setNewCategoryName('');
+                }
+              }}
+            >
+              Crear
+            </Button>
+          </div>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">

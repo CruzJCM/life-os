@@ -201,7 +201,7 @@ export function Settings() {
 
           {/* App Info */}
           <div className="text-center text-sm text-[var(--text-tertiary)]">
-            <p>Life OS v3</p>
+            <p>Daimon</p>
             <p className="text-xs mt-1">Hecho con ❤️ para organizar tu vida</p>
           </div>
         </div>

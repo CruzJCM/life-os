@@ -39,7 +39,7 @@ export function Auth() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
-            Life OS
+            Daimon
           </h1>
           <p className="text-[var(--text-secondary)]">
             Tu dashboard personal para organizar la vida

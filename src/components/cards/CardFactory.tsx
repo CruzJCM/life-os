@@ -5,6 +5,7 @@ import { GoalCounterCard } from './GoalCounterCard';
 import { DailyChecklistCard } from './DailyChecklistCard';
 import { GoalProgressCard } from './GoalProgressCard';
 import { EditCardModal } from '../modals/EditCardModal';
+import type { CardCategory } from '../../hooks/useCardCategories';
 
 interface CardFactoryProps {
   card: Card;
@@ -12,6 +13,8 @@ interface CardFactoryProps {
   onArchive?: () => void;
   onUpdate?: (card: Card) => void;
   onApplyVisualToAll?: (sourceCardId: string, visual: { opacity: number; blur: number }) => Promise<void>;
+  categories: CardCategory[];
+  onCreateCategory: (name: string) => string | null;
 }
 
 export function CardFactory({
@@ -20,6 +23,8 @@ export function CardFactory({
   onArchive,
   onUpdate,
   onApplyVisualToAll,
+  categories,
+  onCreateCategory,
 }: CardFactoryProps) {
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -80,6 +85,8 @@ export function CardFactory({
         onClose={() => setShowEditModal(false)}
         onSave={handleSave}
         onApplyVisualToAll={onApplyVisualToAll}
+        categories={categories}
+        onCreateCategory={onCreateCategory}
       />
     </>
   );

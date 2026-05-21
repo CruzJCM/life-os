@@ -84,7 +84,7 @@ interface ColorPresetDefinition {
 export const COLOR_PRESETS: Record<ColorPreset, ColorPresetDefinition> = {
   classic: {
     label: 'Clásico',
-    description: 'El estilo original de Life OS, renovado',
+    description: 'El estilo original de Daimon, renovado',
     accentPrimary: '#007aff',
     accentSecondary: '#5856d6',
     sidebar: {

@@ -17,6 +17,7 @@ export interface CardVisualSettings {
 
 interface BaseCardConfig {
   visual?: CardVisualSettings;
+  categoryId?: string | null;
 }
 
 export interface EventCounterConfig extends BaseCardConfig {

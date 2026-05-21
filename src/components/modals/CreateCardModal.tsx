@@ -4,11 +4,14 @@ import { Calendar, Target, CheckCircle2, TrendingUp } from 'lucide-react';
 import type { CardType, CreateCardDTO } from '../../types';
 import { CARD_COLORS } from '../../lib/utils';
 import { useTheme } from '../../contexts/ThemeContext';
+import type { CardCategory } from '../../hooks/useCardCategories';
 
 interface CreateCardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (dto: CreateCardDTO) => Promise<void>;
+  categories: CardCategory[];
+  onCreateCategory: (name: string) => string | null;
 }
 
 type CardTypeOption = {
@@ -52,12 +55,20 @@ const defaultConfigs: Record<CardType, Record<string, unknown>> = {
   goal_progress: { current: 0, target: 100, unit: '' },
 };
 
-export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalProps) {
+export function CreateCardModal({
+  isOpen,
+  onClose,
+  onCreate,
+  categories,
+  onCreateCategory,
+}: CreateCardModalProps) {
   const { currentAccentColor } = useTheme();
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<CardType | null>(null);
   const [title, setTitle] = useState('');
   const [color, setColor] = useState(currentAccentColor || CARD_COLORS[0].value);
+  const [categoryId, setCategoryId] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [cardOpacity, setCardOpacity] = useState(0.9);
   const [cardBlur, setCardBlur] = useState(28);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +90,8 @@ export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalPr
     setSelectedType(null);
     setTitle('');
     setColor(currentAccentColor || CARD_COLORS[0].value);
+    setCategoryId('');
+    setNewCategoryName('');
     setCardOpacity(0.9);
     setCardBlur(28);
     setTargetDate('');
@@ -123,6 +136,7 @@ export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalPr
 
       config = {
         ...config,
+        categoryId: categoryId || null,
         visual: {
           opacity: cardOpacity,
           blur: cardBlur,
@@ -280,6 +294,50 @@ export function CreateCardModal({ isOpen, onClose, onCreate }: CreateCardModalPr
                 />
               </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                Categoría
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full px-4 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)]"
+              >
+                <option value="">Sin categoría</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)]">
+                Crear categoría nueva
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Ej: Trabajo"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const createdId = onCreateCategory(newCategoryName);
+                    if (createdId) {
+                      setCategoryId(createdId);
+                      setNewCategoryName('');
+                    }
+                  }}
+                >
+                  Crear
+                </Button>
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">

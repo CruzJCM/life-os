@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { GridLayout, GridLayouts } from '../types';
 
-const STORAGE_KEY = 'life-os-grid-layouts';
+const STORAGE_KEY = 'daimon-grid-layouts';
+const LEGACY_STORAGE_KEY = 'life-os-grid-layouts';
 const GRID_SYNC_RETRY_MS = 1500;
 const GRID_SYNC_MAX_RETRIES = 3;
 
@@ -35,7 +36,15 @@ export function useGrid() {
   const { user } = useAuth();
   const [layouts, setLayouts] = useState<GridLayouts>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      let stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          localStorage.setItem(STORAGE_KEY, legacy);
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          stored = legacy;
+        }
+      }
       if (stored) {
         const parsed = JSON.parse(stored);
         return {
